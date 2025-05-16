@@ -1,0 +1,46 @@
+# Dependencies
+node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+/build/
+/dist/
+/api/
+/server/build
+/public/build
+.vinxi
+.output
+
+# Environment
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Development tools
+.vercel
+.DS_Store
+.cache
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# Testing
+/coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Sentry
+.env.sentry-build-plugin

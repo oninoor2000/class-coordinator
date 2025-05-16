@@ -1,0 +1,768 @@
+/* Google Calendar Inspired Design with Shadcn Emerald Preset */
+/* React Big Calendar Custom Styling - Google Calendar style */
+.rbc-calendar {
+  @apply bg-card text-card-foreground !rounded-md !font-sans;
+}
+
+:root {
+  /* Clean, minimalist color palette inspired by Google Calendar with emerald accent */
+  --cal-bg: #ffffff;
+  --cal-text: #0f172a;
+  --cal-muted: #64748b;
+  --cal-border: #f1f5f9;
+  --cal-accent: #f8fafc;
+  --cal-today: #ecfdf5;
+
+  /* Event colors - clean and minimal */
+  --cal-event-bg: #d1fae5;
+  --cal-event-text: #047857;
+  --cal-event-border: #10b981;
+  --cal-current-time: #10b981;
+}
+
+.dark {
+  --cal-bg: #171717; /* neutral-900 - dark background */
+  --cal-text: #fafafa; /* neutral-50 */
+  --cal-muted: #a3a3a3; /* neutral-400 - subtle gray */
+  --cal-border: rgba(255, 255, 255, 0.02); /* Extremely subtle transparent border */
+  --cal-accent: rgba(255, 255, 255, 0.03); /* Very subtle hover state */
+  --cal-today: rgba(10, 100, 80, 0.12); /* More subtle translucent green */
+  --cal-today-highlight: rgba(16, 185, 129, 0.08); /* Extremely subtle today highlight */
+
+  --cal-event-bg: rgba(6, 95, 70, 0.2); /* translucent emerald */
+  --cal-event-text: #a7f3d0; /* emerald-200 */
+  --cal-event-border: #10b981; /* emerald-500 */
+  --cal-current-time: #10b981; /* emerald-500 */
+}
+
+/* Reset all borders in light mode */
+/* Remove all outer borders */
+.rbc-calendar,
+.rbc-time-view,
+.rbc-month-view,
+.rbc-agenda-view table.rbc-agenda-table,
+.rbc-time-content,
+.rbc-time-header,
+.rbc-time-header-content,
+.rbc-time-header-gutter,
+.rbc-header,
+.rbc-month-header,
+.rbc-agenda-view,
+.rbc-agenda-table,
+.rbc-agenda-content {
+  border: none !important;
+  background-color: var(--cal-bg) !important;
+}
+
+.month-view-borders.rbc-calendar *,
+.month-view-borders.rbc-calendar *:before,
+.month-view-borders.rbc-calendar *:after {
+  @apply !border-border;
+}
+
+/* Reset all borders in light mode */
+.rbc-calendar *,
+.rbc-calendar *:before,
+.rbc-calendar *:after {
+  border-color: var(--cal-border) !important;
+}
+
+/* Reset all borders in dark mode */
+.dark .rbc-calendar *,
+.dark .rbc-calendar *:before,
+.dark .rbc-calendar *:after {
+  border-color: var(--cal-border) !important;
+}
+
+/* Remove all outer borders */
+.dark .rbc-calendar,
+.dark .rbc-time-view,
+.dark .rbc-month-view,
+.dark .rbc-agenda-view table.rbc-agenda-table,
+.dark .rbc-time-content,
+.dark .rbc-time-header,
+.dark .rbc-time-header-content,
+.dark .rbc-time-header-gutter,
+.dark .rbc-header,
+.dark .rbc-month-header,
+.dark .rbc-agenda-view,
+.dark .rbc-agenda-table,
+.dark .rbc-agenda-content {
+  border: none !important;
+  background-color: var(--cal-bg) !important;
+}
+
+/* Clean time slots */
+.dark .rbc-time-content {
+  border-top: 1px solid var(--cal-border) !important;
+}
+
+.dark .rbc-time-header-content {
+  border-left: none !important;
+}
+
+/* Refined today highlighting */
+.dark .rbc-day-slot.rbc-today,
+.dark .rbc-today {
+  background-color: var(--cal-today-highlight) !important;
+}
+
+.dark .rbc-header.rbc-today {
+  color: #10b981 !important;
+}
+
+/* Subtle hover states */
+.dark .rbc-button-link:hover,
+.dark .rbc-show-more:hover {
+  background-color: var(--cal-accent) !important;
+}
+
+.dark .rbc-off-range {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Time column refinements */
+.dark .rbc-time-gutter,
+.dark .rbc-time-column {
+  background-color: var(--cal-bg) !important;
+}
+
+.dark .rbc-time-content > * + * > * {
+  border-left: 1px solid var(--cal-border) !important;
+}
+
+/* Header refinements */
+.dark .rbc-header {
+  border-bottom: none !important;
+}
+
+.dark .rbc-header + .rbc-header {
+  border-left: 1px solid var(--cal-border) !important;
+}
+
+/* Event styling refinements */
+.dark .rbc-event {
+  border-left: 2px solid var(--cal-event-border) !important;
+  box-shadow: none !important;
+}
+
+/* Time indicator */
+.dark .rbc-current-time-indicator {
+  background-color: var(--cal-current-time) !important;
+  opacity: 0.6;
+}
+
+.dark .rbc-current-time-indicator::before {
+  background-color: var(--cal-current-time) !important;
+}
+
+/* ==============================
+   BASE CALENDAR STRUCTURE
+   ============================== */
+
+.rbc-calendar {
+  background-color: var(--cal-bg);
+  color: var(--cal-text);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+/* ==============================
+   TOOLBAR & NAVIGATION
+   ============================== */
+
+.rbc-toolbar {
+  margin-bottom: 1.5rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: none;
+}
+
+.rbc-toolbar-label {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--cal-text);
+}
+
+.rbc-btn-group {
+  display: inline-flex;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.rbc-btn-group > button {
+  background: none;
+  border: 1px solid transparent;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.875rem;
+  color: var(--cal-text);
+  transition: all 0.1s ease;
+}
+
+.rbc-btn-group > button:hover {
+  background-color: var(--cal-accent);
+}
+
+.rbc-btn-group > button.rbc-active {
+  background-color: var(--cal-accent);
+  color: var(--cal-text);
+}
+
+/* ==============================
+   MONTH VIEW STYLING
+   ============================== */
+
+.rbc-month-view {
+  border: none;
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.rbc-month-header {
+  border: none;
+  font-size: 0.75rem;
+}
+
+.rbc-header {
+  border: none;
+  padding: 0.5rem 0;
+  font-weight: 500;
+  text-transform: none;
+  color: var(--cal-muted);
+}
+
+/* Day cells */
+.rbc-month-row {
+  border-top: 1px solid var(--cal-border);
+}
+
+.rbc-date-cell {
+  padding: 0.375rem;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--cal-text);
+}
+
+.rbc-date-cell.rbc-now {
+  font-weight: 600;
+}
+
+/* Simplify borders between days */
+.rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid var(--cal-border);
+}
+
+.rbc-month-row + .rbc-month-row {
+  border-top: none;
+}
+
+/* Today highlight */
+.rbc-today {
+  background-color: var(--cal-today);
+}
+
+/* Stronger specificity for month view today highlight */
+.month-view-borders .rbc-month-view .rbc-today {
+  background-color: var(--cal-today) !important;
+}
+
+/* Off-range days */
+.rbc-day-bg.rbc-off-range-bg {
+  @apply !bg-neutral-100;
+}
+
+.rbc-row.rbc-month-header.rbc-header {
+  font-size: 0.75rem !important;
+}
+
+/* ==============================
+   WEEK/DAY VIEW SPECIFIC
+   ============================== */
+
+.rbc-time-view {
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+/* Remove vertical borders between days */
+.rbc-time-view .rbc-day-slot {
+  border-right: none;
+}
+
+/* Make time slots cleaner */
+.rbc-timeslot-group {
+  border-bottom: 1px solid var(--cal-border);
+  min-height: 60px;
+}
+
+/* Current time indicator */
+.rbc-current-time-indicator {
+  background-color: var(--cal-current-time) !important;
+  height: 2px !important;
+  z-index: 10;
+}
+
+.rbc-current-time-indicator::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--cal-current-time);
+  transform: translate(-50%, -50%);
+}
+
+/* Time gutter styling */
+.rbc-time-gutter {
+  font-size: 0.75rem;
+  color: var(--cal-muted);
+}
+
+.rbc-time-content {
+  border-top: 1px solid var(--cal-border);
+}
+
+.rbc-time-content > * + * > * {
+  border-left: 1px solid var(--cal-border);
+}
+
+.rbc-time-header {
+  padding-top: 0.5rem;
+  border: none;
+}
+
+.rbc-time-header-content {
+  border-left: none;
+}
+
+.rbc-time-header-gutter {
+  border-right: none;
+}
+
+.rbc-label {
+  font-size: 0.75rem;
+  color: var(--cal-muted);
+  padding: 0 0.5rem;
+}
+
+.rbc-row.rbc-time-header-cell {
+  @apply h-16 pt-2;
+}
+
+.rbc-header.rbc-today span {
+  @apply flex !h-7 !min-w-7 items-center justify-center rounded-md;
+}
+
+/* Current day cell highlighting - more specific */
+.month-view-borders .rbc-date-cell.rbc-now.rbc-current {
+  @apply rounded-md bg-emerald-50/30 dark:bg-emerald-950/20;
+}
+
+/* To ensure the rule above takes effect */
+.rbc-date-cell.rbc-now.rbc-current {
+  @apply rounded-md bg-emerald-50/30 dark:bg-emerald-950/20;
+}
+
+.day-view-borders .rbc-time-content > div.rbc-day-slot.rbc-time-column.rbc-now.rbc-today {
+  @apply bg-transparent dark:!bg-transparent;
+}
+
+/* Month view specific off-range styling */
+.month-view-borders .rbc-off-range-bg {
+  background: rgb(246, 248, 250);
+  opacity: 0.9;
+}
+
+.month-view-borders.dark .rbc-off-range-bg {
+  background-color: rgba(23, 23, 23, 0.6);
+}
+
+.month-view-borders .rbc-off-range {
+  opacity: 0.7;
+}
+
+.month-view-borders.dark .rbc-off-range {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Today highlight */
+.month-view-borders .rbc-today {
+  background-color: var(--cal-today);
+}
+
+/* ==============================
+   EVENT STYLING
+   ============================== */
+
+.rbc-event {
+  background-color: var(--cal-event-bg);
+  color: var(--cal-event-text);
+  border: none;
+  border-left: 3px solid var(--cal-event-border);
+  border-radius: 0;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.rbc-event:hover {
+  filter: brightness(0.98);
+}
+
+/* Month view events */
+.rbc-month-view .rbc-event {
+  margin-bottom: 0.125rem;
+}
+
+/* "Show more" link */
+.rbc-show-more {
+  color: var(--cal-event-text);
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin: 0.25rem;
+  background: transparent;
+}
+
+/* ==============================
+   AGENDA VIEW SPECIFIC
+   ============================== */
+
+.rbc-agenda-view {
+  @apply !gap-3 p-2;
+}
+
+.rbc-agenda-table {
+  @apply border-border overflow-hidden rounded-lg border;
+}
+
+.rbc-agenda-table > tbody > tr {
+  @apply !bg-background !text-card-foreground hover:bg-muted/20 transition-colors dark:!bg-transparent;
+}
+
+.rbc-agenda-time-cell {
+  @apply !border-l !text-sm;
+}
+
+.rbc-agenda-date-cell {
+  @apply !text-sm;
+}
+
+.rbc-agenda-event-cell {
+  @apply !text-sm;
+}
+
+.rbc-agenda-table > tbody > tr > td {
+  @apply border-border border-t px-4;
+}
+
+.rbc-agenda-table > tbody > tr > td.rbc-agenda-event-cell {
+  @apply !pl-2;
+}
+
+.rbc-agenda-table > tbody > tr:first-child > td {
+  @apply border-t-0;
+}
+
+.rbc-agenda-table > thead > tr > th:first-child {
+  @apply !pl-2;
+}
+
+.rbc-agenda-table > tbody {
+  @apply border-b-1;
+}
+
+.rbc-agenda-table > thead > tr > th {
+  @apply !bg-card border-border !border-b !border-l px-4 py-2.5 text-sm font-medium;
+}
+
+.rbc-agenda-table > thead > tr > th:first-child {
+  @apply !w-28 !min-w-28;
+}
+.rbc-agenda-table > tbody > tr > td.rbc-agenda-date-cell {
+  @apply !w-28 !min-w-28;
+}
+
+.rbc-agenda-table > thead > tr > th:nth-child(2) {
+  @apply !w-32 !min-w-32;
+}
+.rbc-agenda-table > tbody > tr > td.rbc-agenda-time-cell:nth-child(2) {
+  @apply !w-32 !min-w-32;
+}
+
+.rbc-agenda-table > thead > tr > th:first-child {
+  @apply !border-l-0;
+}
+
+/* Add a vertical colored bar to events */
+.rbc-agenda-event-cell {
+  @apply relative !pl-6;
+}
+
+.rbc-agenda-empty {
+  @apply text-muted-foreground bg-muted/5 border-border/50 m-2 rounded-lg border py-12 text-center text-sm;
+}
+
+/* ==============================
+   TABLE STYLING
+   ============================== */
+
+.rbc-agenda-view {
+  @apply !gap-3;
+}
+
+.rbc-agenda-table {
+  @apply border-border overflow-hidden rounded-lg border;
+}
+
+.rbc-agenda-table > tbody > tr {
+  @apply !bg-background !text-card-foreground;
+}
+
+.rbc-agenda-table > thead > tr > th {
+  @apply !bg-card border-border border-b;
+}
+
+/* ==============================
+   RESPONSIVE DESIGN
+   ============================== */
+
+@media (max-width: 768px) {
+  .rbc-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .rbc-toolbar-label {
+    margin: 0.5rem 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .rbc-btn-group {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rbc-time-gutter {
+    width: 50px !important;
+  }
+}
+
+/* Fix scrolling issues */
+.rbc-time-view .rbc-time-content {
+  @apply overflow-y-auto;
+  scroll-behavior: smooth;
+}
+
+/* Override any libraries' !important declarations */
+.rbc-header,
+.rbc-day-bg {
+  background: var(--cal-bg) !important;
+}
+
+/* Day headers in week view */
+.rbc-header span {
+  display: block;
+}
+
+/* Current day highlight */
+.rbc-day-slot.rbc-today {
+  background-color: var(--cal-today);
+}
+
+/* Fix the width of the time gutter to match Google Calendar */
+.rbc-time-gutter {
+  width: 60px;
+}
+
+/* Remove extra borders in all-day section */
+.rbc-allday-cell {
+  border-bottom: 1px solid var(--cal-border);
+}
+
+/* Override the row transitions */
+.rbc-time-column .rbc-timeslot-group {
+  min-height: 48px;
+}
+
+/* Cleaner month/week/day header styling */
+.rbc-header {
+  font-weight: 400;
+}
+
+.rbc-time-header-content .rbc-header {
+  border-bottom: none;
+}
+
+/* Show weekday names and dates in header like Google Calendar */
+.rbc-header span {
+  display: block;
+}
+
+/* Make sure events don't get lost in compact mode */
+.rbc-event-content {
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Additional dark mode optimizations for react-big-calendar with minimal styling */
+.dark .rbc-today {
+  background-color: var(--cal-today); /* Subtle translucent green */
+}
+
+/* Original off-range days - will be overridden by more specific rules below */
+.rbc-off-range-bg {
+  background: var(--cal-accent);
+  opacity: 0.5;
+}
+
+.dark .rbc-day-slot.rbc-today {
+  background-color: var(--cal-today); /* Subtle highlight for today */
+}
+
+/* Maintain readable labels in dark mode */
+.dark .rbc-time-gutter .rbc-label,
+.dark .rbc-header {
+  color: var(--cal-muted); /* Neutral muted color */
+}
+
+/* Ensure clean, neutral backgrounds in dark mode */
+.dark .rbc-header,
+.dark .rbc-day-bg {
+  background-color: var(--cal-bg) !important; /* Use neutral dark background */
+}
+
+/* Maintain consistent background across all views */
+.dark .rbc-month-view,
+.dark .rbc-time-view,
+.dark .rbc-agenda-view {
+  background-color: var(--cal-bg);
+}
+
+/* Subtle, minimal event styling in dark mode */
+.dark .rbc-event {
+  background-color: var(--cal-event-bg); /* Translucent emerald */
+  border-left: 2px solid var(--cal-event-border); /* Thin emerald border */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Additional dark mode border optimizations */
+.dark .rbc-time-view,
+.dark .rbc-month-view,
+.dark .rbc-agenda-view table.rbc-agenda-table {
+  border: none;
+}
+
+.dark .rbc-month-row,
+.dark .rbc-time-content,
+.dark .rbc-time-content > * + * > *,
+.dark .rbc-month-view .rbc-day-bg + .rbc-day-bg,
+.dark .rbc-timeslot-group,
+.dark .rbc-agenda-view table.rbc-agenda-table thead > tr > th,
+.dark .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  border-color: var(--cal-border);
+}
+
+.dark .rbc-time-content > * + * > * {
+  border-left-width: 1px;
+}
+
+.dark .rbc-month-row + .rbc-month-row {
+  border-top-width: 1px;
+}
+
+/* Comprehensive dark mode border improvements */
+.dark .rbc-time-view,
+.dark .rbc-month-view,
+.dark .rbc-agenda-view table.rbc-agenda-table,
+.dark .rbc-time-content,
+.dark .rbc-time-header,
+.dark .rbc-time-header-content,
+.dark .rbc-time-header-gutter,
+.dark .rbc-header,
+.dark .rbc-month-header {
+  border: none !important;
+}
+
+.dark .rbc-month-row,
+.dark .rbc-time-content,
+.dark .rbc-time-content > * + * > *,
+.dark .rbc-month-view .rbc-day-bg + .rbc-day-bg,
+.dark .rbc-timeslot-group,
+.dark .rbc-agenda-view table.rbc-agenda-table thead > tr > th,
+.dark .rbc-agenda-view table.rbc-agenda-table tbody > tr > td,
+.dark .rbc-month-row + .rbc-month-row,
+.dark .rbc-time-header-content .rbc-header + .rbc-header,
+.dark .rbc-time-content > * + * > *,
+.dark .rbc-day-slot .rbc-time-slot-group {
+  border-color: var(--cal-border) !important;
+}
+
+/* Ensure clean separators in time slots */
+.dark .rbc-timeslot-group {
+  border-bottom: 1px solid var(--cal-border) !important;
+  min-height: 48px;
+}
+
+/* Subtle grid lines */
+.dark .rbc-time-column .rbc-timeslot-group {
+  border-top: 1px solid var(--cal-border) !important;
+}
+
+/* Remove unnecessary borders in time view */
+.dark .rbc-time-view .rbc-day-slot {
+  border-right: none !important;
+}
+
+/* ==============================
+   POPUP STYLING
+   ============================== */
+
+body > div.rbc-overlay > div.rbc-overlay-header {
+  @apply !text-sm !font-medium;
+}
+
+body > div.rbc-overlay {
+  @apply !bg-card space-y-4 rounded-md;
+}
+
+body > div.rbc-overlay > div {
+  @apply mb-1.5 rounded-md;
+}
+
+.rbc-button-link.rbc-show-more {
+  @apply !bg-transparent;
+}
+
+@keyframes pulse-border {
+  0% {
+    border-color: #059669;
+    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.5);
+  }
+  100% {
+    border-color: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
+  }
+}
+
+@keyframes pulse-border-dark {
+  0% {
+    border-color: #10b981;
+    box-shadow: 0 0 0 1px rgba(6, 95, 70, 0.5);
+  }
+  100% {
+    border-color: #34d399;
+    box-shadow: 0 0 0 4px rgba(6, 95, 70, 0.4);
+  }
+}
