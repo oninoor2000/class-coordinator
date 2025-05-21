@@ -10,7 +10,4 @@ export default defineConfig({
       }),
     ],
   },
-  server: {
-    preset: 'vercel',
-  },
 });
