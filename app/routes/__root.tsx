@@ -14,7 +14,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 
 import appCss from '@/lib/styles/globals.css?url';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
+import bigCalendarCss from 'react-big-calendar/lib/css/react-big-calendar.css?url';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -37,6 +37,7 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: 'stylesheet', href: appCss },
+      { rel: 'stylesheet', href: bigCalendarCss },
       // { rel: 'manifest', href: '/site.webmanifest', color: '#fffff' },
       // { rel: 'icon', href: '/favicon.ico' },
     ],
