@@ -1,0 +1,1 @@
+ALTER TABLE "bsi_links" RENAME COLUMN "qr_img_id" TO "qr_img_link";

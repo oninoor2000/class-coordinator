@@ -214,6 +214,7 @@ export default function FullCalendar() {
 
   // On select event
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
+    console.log('Selected event: ', event);
     setSelectedEvent(event);
     setSidebarOpen(true);
     setSidebarContent('showEvent');
@@ -300,8 +301,8 @@ export default function FullCalendar() {
                 mode="create"
                 onClose={handleCloseSidebar}
                 options={dataOptions}
+                initialData={selectedEvent ?? undefined}
                 selectedSlot={selectedSlot}
-                handleSelectedEvent={handleSelectEvent}
               />
             </motion.div>
           )}
@@ -318,6 +319,7 @@ export default function FullCalendar() {
                 mode="edit"
                 onClose={handleCloseEditFormSidebar}
                 options={dataOptions}
+                handleSelectedEvent={handleSelectEvent}
                 initialData={selectedEvent ?? undefined}
               />
             </motion.div>
@@ -345,7 +347,7 @@ export default function FullCalendar() {
           ease: [0.4, 0, 0.2, 1],
         }}
       >
-        <div className="bg-accent dark:bg-accent-dark mb-2 flex w-full flex-none items-center justify-between rounded-lg p-2 backdrop-blur">
+        <div className="bg-accent/50 dark:bg-accent-dark mb-2 flex w-full flex-none items-center justify-between rounded-lg p-2 backdrop-blur">
           <CalendarHeader
             date={date}
             view={view}

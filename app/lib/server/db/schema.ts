@@ -211,7 +211,7 @@ export const links = createTable(
     meetingUsername: varchar('meeting_username', { length: 500 }),
     meetingPassword: varchar('meeting_password', { length: 500 }),
     description: text('description'),
-    qrImgId: text('qr_img_id'),
+    qrImgLink: text('qr_img_link'),
     createdAt: timestamp('created_at', { withTimezone: true }),
   },
   table => [
@@ -221,12 +221,8 @@ export const links = createTable(
   ]
 );
 
-export const linksRelations = relations(links, ({ one, many }) => ({
+export const linksRelations = relations(links, ({ many }) => ({
   schedule: many(scheduleToLink),
-  image: one(files, {
-    fields: [links.qrImgId],
-    references: [files.id],
-  }),
 }));
 
 export const officeHours = createTable(
@@ -273,10 +269,6 @@ export const files = createTable(
 );
 
 export const filesRelations = relations(files, ({ one }) => ({
-  link: one(links, {
-    fields: [files.id],
-    references: [links.qrImgId],
-  }),
   location: one(locations, {
     fields: [files.id],
     references: [locations.imageId],
@@ -596,12 +588,6 @@ export const locationsFk = [
   }),
 ];
 
-export const linksFk = [
-  foreignKey({
-    columns: [links.qrImgId],
-    foreignColumns: [files.id],
-  }),
-];
 export const scheduleToLinkFk = [
   foreignKey({
     columns: [scheduleToLink.meetingLinkId],

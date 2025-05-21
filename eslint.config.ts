@@ -1,6 +1,5 @@
 import * as reactHooks from 'eslint-plugin-react-hooks';
 
-import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import tsParser from '@typescript-eslint/parser';
 import eslintConfigPrettier from 'eslint-config-prettier';
@@ -12,7 +11,6 @@ import drizzle from 'eslint-plugin-drizzle';
 export default [
   ...tanstackConfig,
   ...tseslint.configs.recommended,
-  js.configs.recommended,
   {
     files: ['**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}'],
     plugins: {
@@ -34,6 +32,7 @@ export default [
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unnecessary-condition': 'off',
       '@typescript-eslint/require-await': 'off',
       '@typescript-eslint/no-misused-promises': [
         'error',

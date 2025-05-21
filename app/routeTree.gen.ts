@@ -10,10 +10,10 @@
 
 // Import Routes
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as AppRouteImport } from './routes/app/route'
-import { Route as IndexImport } from './routes/index'
-import { Route as AppCalendarImport } from './routes/app/calendar'
+import { Route as rootRoute } from './routes/__root';
+import { Route as AppRouteImport } from './routes/app/route';
+import { Route as IndexImport } from './routes/index';
+import { Route as AppCalendarImport } from './routes/app/calendar';
 
 // Create/Update Routes
 
@@ -21,103 +21,101 @@ const AppRouteRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const AppCalendarRoute = AppCalendarImport.update({
   id: '/calendar',
   path: '/calendar',
   getParentRoute: () => AppRouteRoute,
-} as any)
+} as any);
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/';
+      path: '/';
+      fullPath: '/';
+      preLoaderRoute: typeof IndexImport;
+      parentRoute: typeof rootRoute;
+    };
     '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/app';
+      path: '/app';
+      fullPath: '/app';
+      preLoaderRoute: typeof AppRouteImport;
+      parentRoute: typeof rootRoute;
+    };
     '/app/calendar': {
-      id: '/app/calendar'
-      path: '/calendar'
-      fullPath: '/app/calendar'
-      preLoaderRoute: typeof AppCalendarImport
-      parentRoute: typeof AppRouteImport
-    }
+      id: '/app/calendar';
+      path: '/calendar';
+      fullPath: '/app/calendar';
+      preLoaderRoute: typeof AppCalendarImport;
+      parentRoute: typeof AppRouteImport;
+    };
   }
 }
 
 // Create and export the route tree
 
 interface AppRouteRouteChildren {
-  AppCalendarRoute: typeof AppCalendarRoute
+  AppCalendarRoute: typeof AppCalendarRoute;
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppCalendarRoute: AppCalendarRoute,
-}
+};
 
-const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
-  AppRouteRouteChildren,
-)
+const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(AppRouteRouteChildren);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/app': typeof AppRouteRouteWithChildren
-  '/app/calendar': typeof AppCalendarRoute
+  '/': typeof IndexRoute;
+  '/app': typeof AppRouteRouteWithChildren;
+  '/app/calendar': typeof AppCalendarRoute;
 }
 
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/app': typeof AppRouteRouteWithChildren
-  '/app/calendar': typeof AppCalendarRoute
+  '/': typeof IndexRoute;
+  '/app': typeof AppRouteRouteWithChildren;
+  '/app/calendar': typeof AppCalendarRoute;
 }
 
 export interface FileRoutesById {
-  __root__: typeof rootRoute
-  '/': typeof IndexRoute
-  '/app': typeof AppRouteRouteWithChildren
-  '/app/calendar': typeof AppCalendarRoute
+  __root__: typeof rootRoute;
+  '/': typeof IndexRoute;
+  '/app': typeof AppRouteRouteWithChildren;
+  '/app/calendar': typeof AppCalendarRoute;
 }
 
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/app/calendar'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/app/calendar'
-  id: '__root__' | '/' | '/app' | '/app/calendar'
-  fileRoutesById: FileRoutesById
+  fileRoutesByFullPath: FileRoutesByFullPath;
+  fullPaths: '/' | '/app' | '/app/calendar';
+  fileRoutesByTo: FileRoutesByTo;
+  to: '/' | '/app' | '/app/calendar';
+  id: '__root__' | '/' | '/app' | '/app/calendar';
+  fileRoutesById: FileRoutesById;
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AppRouteRoute: typeof AppRouteRouteWithChildren
+  IndexRoute: typeof IndexRoute;
+  AppRouteRoute: typeof AppRouteRouteWithChildren;
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRouteRoute: AppRouteRouteWithChildren,
-}
+};
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
 /* ROUTE_MANIFEST_START
 {

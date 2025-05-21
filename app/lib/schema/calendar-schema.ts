@@ -18,8 +18,10 @@ export const NewMeetingLinkSchema = z.object({
   platform: z.enum(PlatformEnum.enumValues),
   name: z.string().min(1, 'Link name is required'),
   url: z.string().url('Please enter a valid URL'),
+  shortenedUrl: z.string().optional(), // Used as customShortCode in the API
   meetingUsername: z.string().optional(),
   meetingPassword: z.string().optional(),
+  qrImgLink: z.string().optional(),
   description: z.string().optional(),
 });
 export type NewMeetingLinkSchemaType = z.infer<typeof NewMeetingLinkSchema>;

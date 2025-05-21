@@ -48,7 +48,7 @@ export function generateLinks(
   if (id) {
     links.update = { href: `${path}/${id}`, method: 'PUT' };
     links.patch = { href: `${path}/${id}`, method: 'PATCH' };
-    links.delete = { href: `${path}/${id}`, method: 'DELETE' };
+    links.remove = { href: `${path}/${id}`, method: 'DELETE' };
   } else {
     links.create = { href: path, method: 'POST' };
   }

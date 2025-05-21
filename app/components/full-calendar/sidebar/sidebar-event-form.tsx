@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { id } from 'date-fns/locale';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { addHours, addMinutes, format, getHours, isSameDay } from 'date-fns';
 
+import type { LucideIcon } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
+import type { CreateEventSchemaType } from '@/routes/api/v1/calendar';
+import type { SidebarEventFormSchemaType } from '@/lib/schema/calendar-schema';
 import type { CalendarEvent, FormOptionsApiResponse } from '@/lib/types/calendar-types';
 
 import {
@@ -15,34 +19,39 @@ import {
   Check,
   School,
   Monitor,
+  Loader2,
   ClockIcon,
   CalendarIcon,
-  type LucideIcon,
   ChevronDownIcon,
   CalendarClockIcon,
-  Loader2,
 } from 'lucide-react';
-import {
-  Command,
-  CommandEmpty,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
 import {
   Select,
   SelectItem,
-  SelectContent,
-  SelectTrigger,
   SelectValue,
-  SelectSeparator,
   SelectGroup,
   SelectLabel,
+  SelectContent,
+  SelectTrigger,
+  SelectSeparator,
 } from '@/components/ui/select';
 import {
-  SidebarEventFormSchema,
-  type SidebarEventFormSchemaType,
-} from '@/lib/schema/calendar-schema';
+  Form,
+  FormItem,
+  FormLabel,
+  FormField,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Command,
+  CommandList,
+  CommandItem,
+  CommandInput,
+  CommandEmpty,
+  CommandGroup,
+} from '@/components/ui/command';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -50,21 +59,15 @@ import { Switch } from '@/components/ui/switch';
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { CommandGroup } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FormLabel, FormField } from '@/components/ui/form';
 import { stringToRecurrenceRule } from '@/utils/recurrence-utils';
-import { Form, FormControl, FormItem, FormMessage } from '@/components/ui/form';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { SidebarEventFormSchema } from '@/lib/schema/calendar-schema';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 import OnlineMeetingInput from './online-meeting-input';
-import { useMutation } from '@tanstack/react-query';
-import { useQueryClient } from '@tanstack/react-query';
 import SbFormRecurrenceInput from './sb-form-recurrence-input';
-import type { CreateEventSchemaType } from '@/routes/api/v1/calendar';
-import { toast } from 'sonner';
 
 interface SidebarContentEventFormProps {
   mode: 'create' | 'edit';
@@ -135,6 +138,11 @@ export default function SidebarEventForm({
   const LOCATION_OPTIONS = options?.data?.locationOptions ?? [];
   const MEETING_LINK_OPTIONS = options?.data?.meetingLinkOptions ?? [];
 
+  // #### State ####
+  //  ---------------
+  const [classDialogOpen, setClassDialogOpen] = useState<boolean>(false);
+  const [subjectDialogOpen, setSubjectDialogOpen] = useState<boolean>(false);
+
   //   #### Prepare Data ####
   //  ---------------
 
@@ -188,49 +196,7 @@ export default function SidebarEventForm({
 
   // Formatted initial data to match the form schema
   const formattedInitialData = useMemo(() => {
-    if (!initialData?.start || !initialData?.end) return undefined;
-
-    return {
-      ...initialData,
-      startTime: format(new Date(initialData.start), 'HH:00'),
-      endTime: format(new Date(initialData.end), 'HH:00'),
-      description: initialData.description ?? undefined,
-      start: new Date(initialData.start),
-      end: new Date(initialData.end),
-      allDay: checkIfAllDay({
-        start: new Date(initialData.start),
-        end: new Date(initialData.end),
-      }),
-      classId: initialData.class?.id ?? undefined,
-      subjectId: initialData.subject?.id ?? undefined,
-      creatorId: initialData.creator?.id ?? undefined,
-      eventId: initialData.event?.id ?? undefined,
-      locationId: initialData.location?.id ?? undefined,
-      icalUid: initialData?.icalUid,
-      meetingType: initialData.meetingType,
-      recurrence: initialData?.recurrence,
-      recurringId: initialData?.recurringId,
-      sequence: initialData?.sequence,
-      color: initialData?.color,
-      meetingLinkId: initialData?.meetingLink?.id ?? undefined,
-      newMeetingLink: initialData?.meetingLink?.url
-        ? {
-            platform: initialData.meetingLink.platform ?? 'zoom',
-            name: initialData.meetingLink.name ?? '',
-            url: initialData.meetingLink.url ?? '',
-            meetingUsername: initialData.meetingLink.meetingUsername ?? undefined,
-            meetingPassword: initialData.meetingLink.meetingPassword ?? undefined,
-          }
-        : undefined,
-    } as SidebarEventFormSchemaType;
-  }, [initialData, checkIfAllDay]);
-
-  //   #### Form ####
-  //  ---------------
-  // Initialize form with default values or initial data
-  const form = useForm<SidebarEventFormSchemaType>({
-    resolver: zodResolver(SidebarEventFormSchema),
-    defaultValues: formattedInitialData ?? {
+    const defaultValues: SidebarEventFormSchemaType = {
       title: '',
       description: '',
       start: selectedSlot?.from ?? addHours(new Date(), 1),
@@ -238,9 +204,9 @@ export default function SidebarEventForm({
       allDay: false,
       startTime: format(selectedSlot?.from ?? addHours(new Date(), 1), 'HH:mm'),
       endTime: format(selectedSlot?.to ?? addHours(new Date(), 2), 'HH:mm'),
-      classId: undefined,
-      subjectId: undefined,
-      classType: 'theory',
+      classId: 0,
+      subjectId: 0,
+      classType: 'theory' as const,
       creatorId: 0,
       eventId: undefined,
       icalUid: undefined,
@@ -248,11 +214,51 @@ export default function SidebarEventForm({
       recurrence: undefined,
       recurringId: undefined,
       sequence: 0,
-      color: '#3b82f6',
+      color: undefined,
       meetingLinkId: undefined,
-      newMeetingLink: undefined,
       locationId: undefined,
-    },
+      newMeetingLink: undefined,
+    };
+
+    if (mode === 'create') return defaultValues;
+
+    if (mode === 'edit' && !initialData) return undefined;
+
+    return {
+      ...defaultValues,
+      classType: initialData?.classType ?? 'theory',
+      title: initialData?.title ?? '',
+      description: initialData?.description ?? '',
+      startTime: format(new Date(initialData?.start ?? new Date()), 'HH:00'),
+      endTime: format(new Date(initialData?.end ?? new Date()), 'HH:00'),
+      start: new Date(initialData?.start ?? new Date()),
+      end: new Date(initialData?.end ?? new Date()),
+      allDay: checkIfAllDay({
+        start: new Date(initialData?.start ?? new Date()),
+        end: new Date(initialData?.end ?? new Date()),
+      }),
+      classId: initialData?.class?.id ?? 0,
+      subjectId: initialData?.subject?.id ?? 0,
+      creatorId: initialData?.creator?.id ?? 0,
+      eventId: initialData?.event?.id ?? 0,
+      locationId: initialData?.location?.id ?? undefined,
+      icalUid: initialData?.icalUid,
+      meetingType: initialData?.meetingType,
+      recurrence: initialData?.recurrence,
+      recurringId: initialData?.recurringId,
+      sequence: initialData?.sequence,
+      color: initialData?.color,
+      meetingLinkId: initialData?.meetingLink?.id ?? undefined,
+      newMeetingLink: undefined,
+    } as SidebarEventFormSchemaType;
+  }, [mode, selectedSlot?.from, selectedSlot?.to, initialData, checkIfAllDay]);
+
+  //   #### Form ####
+  //  ---------------
+  // Initialize form with default values or initial data
+  const form = useForm<SidebarEventFormSchemaType>({
+    resolver: zodResolver(SidebarEventFormSchema),
+    defaultValues: formattedInitialData as SidebarEventFormSchemaType,
   });
 
   // Watch necessary form values
@@ -398,7 +404,7 @@ export default function SidebarEventForm({
 
   const queryClient = useQueryClient();
   // Event Mutation
-  const { mutate: createEvent, isLoading: isCreatingEvent } = useMutation({
+  const { mutate: createEvent, isPending: isCreatingEvent } = useMutation({
     mutationFn: (event: CreateEventSchemaType) =>
       fetch('/api/v1/calendar', {
         method: 'POST',
@@ -425,7 +431,7 @@ export default function SidebarEventForm({
   });
 
   // Handle form submission
-  function handleSubmit(data: SidebarEventFormSchemaType) {
+  function handleSubmit(data: SidebarEventFormSchemaType): void {
     const { recurrence, ...rest } = data;
     createEvent({
       ...rest,
@@ -605,7 +611,7 @@ export default function SidebarEventForm({
                           disabled={watchAllDay}
                         >
                           <FormControl>
-                            <SelectTrigger className="hover:bg-accent max-w-[127.6px] w-full cursor-pointer transition-all">
+                            <SelectTrigger className="hover:bg-accent w-full max-w-[127.6px] cursor-pointer transition-all">
                               <ClockIcon className="mr-2 h-4 w-4 opacity-50" />
                               <SelectValue placeholder="Select time" />
                             </SelectTrigger>
@@ -785,7 +791,7 @@ export default function SidebarEventForm({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Class</FormLabel>
-                          <Popover>
+                          <Popover open={classDialogOpen} onOpenChange={setClassDialogOpen}>
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
@@ -817,6 +823,7 @@ export default function SidebarEventForm({
                                         key={classOpt.id}
                                         onSelect={() => {
                                           field.onChange(classOpt.id);
+                                          setClassDialogOpen(false);
                                         }}
                                         value={classOpt.name}
                                         className="cursor-pointer"
@@ -848,7 +855,7 @@ export default function SidebarEventForm({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Subject</FormLabel>
-                          <Popover>
+                          <Popover open={subjectDialogOpen} onOpenChange={setSubjectDialogOpen}>
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
@@ -881,6 +888,7 @@ export default function SidebarEventForm({
                                         key={classOpt.id}
                                         onSelect={() => {
                                           field.onChange(classOpt.id);
+                                          setSubjectDialogOpen(false);
                                         }}
                                         value={classOpt.name}
                                         className="cursor-pointer"

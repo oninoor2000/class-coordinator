@@ -16,13 +16,7 @@ import appCss from '@/lib/styles/globals.css?url';
 export const Route = createRootRoute({
   component: RootComponent,
   loader: () => getThemeServerFn(),
-  errorComponent: props => {
-    return (
-      <RootDocument>
-        <DefaultCatchBoundary {...props} />
-      </RootDocument>
-    );
-  },
+  errorComponent: ErrorComponent,
   notFoundComponent: () => <NotFound />,
   head: () => ({
     meta: [
@@ -40,8 +34,8 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: 'stylesheet', href: appCss },
-      { rel: 'manifest', href: '/site.webmanifest', color: '#fffff' },
-      { rel: 'icon', href: '/favicon.ico' },
+      // { rel: 'manifest', href: '/site.webmanifest', color: '#fffff' },
+      // { rel: 'icon', href: '/favicon.ico' },
     ],
   }),
 });
@@ -57,6 +51,23 @@ function RootComponent() {
         </RootDocument>
       </ThemeProvider>
     </QueryClientProvider>
+  );
+}
+
+function ErrorComponent(props: any) {
+  // Don't use Theme context in error boundaries, just provide a basic fallback
+  return (
+    <html className="light">
+      <head>
+        <HeadContent />
+      </head>
+      <body className="bg-background text-foreground">
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <DefaultCatchBoundary {...props} />
+        </div>
+        <Scripts />
+      </body>
+    </html>
   );
 }
 

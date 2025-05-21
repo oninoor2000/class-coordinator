@@ -123,6 +123,7 @@ const selectionQuery = {
     shortenedUrl: links.shortenedUrl,
     meetingUsername: links.meetingUsername,
     meetingPassword: links.meetingPassword,
+    qrImgLink: links.qrImgLink,
   },
 };
 

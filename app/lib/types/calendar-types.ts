@@ -64,6 +64,7 @@ export type CalendarEvent = {
     shortenedUrl: string | null;
     meetingUsername: string | null;
     meetingPassword: string | null;
+    qrImgLink: string | null;
   } | null;
 };
 
@@ -108,4 +109,9 @@ export type RecurrenceRule = {
   weekDays?: number[];
   endDate?: Date | null;
   count?: number | null;
+};
+
+export type CalendarLinkApiResponse = {
+  data: typeof links.$inferSelect;
+  _links: Record<string, { href: string; method?: string }>;
 };

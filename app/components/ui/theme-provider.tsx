@@ -1,6 +1,7 @@
 import { setThemeServerFn } from '@/utils/theme';
 import { useRouter } from '@tanstack/react-router';
-import { createContext, type PropsWithChildren, use } from 'react';
+import { createContext, useContext } from 'react';
+import type { PropsWithChildren } from 'react';
 
 export type Theme = 'light' | 'dark';
 
@@ -17,11 +18,11 @@ export function ThemeProvider({ children, theme }: Props) {
     router.invalidate();
   }
 
-  return <ThemeContext value={{ theme, setTheme }}>{children}</ThemeContext>;
+  return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {
-  const val = use(ThemeContext);
+  const val = useContext(ThemeContext);
   if (!val) throw new Error('useTheme called outside of ThemeProvider!');
   return val;
 }
