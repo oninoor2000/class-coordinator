@@ -1,5 +1,3 @@
-'use client';
-
 import { useId, useState } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -62,7 +60,7 @@ export default function CalendarViewSelector({
           <CalendarDays
             className={cn(
               'text-muted-foreground/70 h-3.5 w-3.5',
-              selectedView === 'day' && 'text-foreground '
+              selectedView === 'day' && 'text-foreground'
             )}
           />
           <span className={selectedView === 'day' ? 'text-foreground' : 'text-muted-foreground/70'}>
@@ -75,7 +73,7 @@ export default function CalendarViewSelector({
           <CalendarRange
             className={cn(
               'text-muted-foreground/70 h-3.5 w-3.5',
-              selectedView === 'week' && 'text-foreground '
+              selectedView === 'week' && 'text-foreground'
             )}
           />
           <span
@@ -90,7 +88,7 @@ export default function CalendarViewSelector({
           <Calendar
             className={cn(
               'text-muted-foreground/70 h-3.5 w-3.5',
-              selectedView === 'month' && 'text-foreground '
+              selectedView === 'month' && 'text-foreground'
             )}
           />
           <span
@@ -105,7 +103,7 @@ export default function CalendarViewSelector({
           <ListTodo
             className={cn(
               'text-muted-foreground/70 h-3.5 w-3.5',
-              selectedView === 'agenda' && 'text-foreground '
+              selectedView === 'agenda' && 'text-foreground'
             )}
           />
           <span

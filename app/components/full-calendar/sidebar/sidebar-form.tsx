@@ -1,5 +1,3 @@
-'use client';
-
 import type { z } from 'zod';
 
 import { Form, FormItem, FormLabel, FormField, FormControl } from '@/components/ui/form';

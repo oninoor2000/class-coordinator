@@ -1,5 +1,3 @@
-'use client';
-
 import type { CalendarView } from '@/lib/types/calendar-types';
 
 import { Button } from '../ui/button';
