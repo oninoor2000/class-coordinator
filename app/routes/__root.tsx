@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import type { ErrorComponentProps } from '@tanstack/react-router';
+
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
 import { seo } from '@/utils/seo';
 import { Toaster } from '@/components/ui/sonner';
@@ -12,6 +14,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 
 import appCss from '@/lib/styles/globals.css?url';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -54,7 +57,7 @@ function RootComponent() {
   );
 }
 
-function ErrorComponent(props: any) {
+function ErrorComponent(props: ErrorComponentProps) {
   // Don't use Theme context in error boundaries, just provide a basic fallback
   return (
     <html className="light">
