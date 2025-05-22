@@ -29,7 +29,7 @@ function isValidFrequency(freq: string): freq is RecurrenceFrequency {
 }
 
 function isValidWeekDay(day: unknown): day is WeekDay {
-  return typeof day === 'number' && day > 0 && day <= 6;
+  return typeof day === 'number' && day >= 0 && day <= 6; // Ubah day > 0 menjadi day >= 0
 }
 
 function isValidICalWeekDay(day: string): day is ICalWeekDay {

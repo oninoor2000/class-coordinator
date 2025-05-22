@@ -73,7 +73,7 @@ export const SidebarEventFormSchema = z
       }),
     allDay: z.boolean(),
     creatorId: z.number(),
-    eventId: z.number(),
+    eventsId: z.number(),
     classType: z.enum(ClassTypeEnum.enumValues),
     meetingType: z.enum(MeetingTypeEnum.enumValues),
     recurrence: z.string().nullable().optional(),

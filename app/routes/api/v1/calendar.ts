@@ -348,8 +348,8 @@ export const APIRoute = createAPIFileRoute('/api copy/v1/calendar')({
         locationId: eventData.locationId,
         recurrence: eventData.recurrence,
         color: eventData.color,
-        creatorId: 0, // Will be replaced with user ID after authentication is implemented
-        eventsId: 1, // Should be adjusted to match your events logic
+        creatorId: 1, // Will be replaced with user ID after authentication is implemented
+        eventsId: eventData.eventsId, // Should be adjusted to match your events logic
         recurringId: eventData.recurringId,
         sequence: eventData.sequence,
         icalUid: eventData.icalUid,

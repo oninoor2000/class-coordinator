@@ -22,6 +22,7 @@ import CalendarHeader from './calendar-header';
 import SidebarEvents from './sidebar/sidebar-events';
 import SidebarEventForm from './sidebar/sidebar-event-form';
 import SidebarEventDetail from './sidebar/sidebar-event-detail';
+import { t } from 'node_modules/framer-motion/dist/types.d-CQt5spQA';
 
 const locales = {
   id: id,
@@ -37,7 +38,11 @@ const localizer = dateFnsLocalizer({
 
 export default function FullCalendar() {
   // Fetch events
-  const { isLoading: isLoadingEvents, data: dataEvents } = useQuery({
+  const {
+    isLoading: isLoadingEvents,
+    data: dataEvents,
+    refetch: calendarEventRefetch,
+  } = useQuery({
     queryKey: ['calendarEvents'],
     queryFn: () =>
       fetch('/api/v1/calendar').then(res => res.json() as Promise<CalendarEventsApiResponse>),
@@ -293,11 +298,12 @@ export default function FullCalendar() {
             >
               <SidebarEventForm
                 mode="create"
-                onClose={() => handleCloseSidebar('showEvent')}
                 options={dataOptions}
-                initialData={selectedEvent ?? undefined}
                 selectedSlot={selectedSlot}
                 handleSelectedEvent={handleSelectEvent}
+                initialData={selectedEvent ?? undefined}
+                calendarEventRefetch={calendarEventRefetch}
+                onClose={() => handleCloseSidebar('showEvent')}
               />
             </motion.div>
           )}
@@ -312,11 +318,12 @@ export default function FullCalendar() {
             >
               <SidebarEventForm
                 mode="edit"
-                onClose={() => handleCloseSidebar('showEvent')}
-                deleteClose={() => handleCloseSidebar('events')}
                 options={dataOptions}
                 handleSelectedEvent={handleSelectEvent}
                 initialData={selectedEvent ?? undefined}
+                calendarEventRefetch={calendarEventRefetch}
+                onClose={() => handleCloseSidebar('showEvent')}
+                deleteClose={() => handleCloseSidebar('events')}
               />
             </motion.div>
           )}

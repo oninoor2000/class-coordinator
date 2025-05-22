@@ -89,12 +89,13 @@ import SbFormRecurrenceInput from './sb-form-recurrence-input';
 
 interface SidebarContentEventFormProps {
   mode: 'create' | 'edit';
+  selectedSlot?: DateRange | undefined;
   initialData?: CalendarEvent | undefined;
   options: FormOptionsApiResponse | undefined;
   onClose?: () => void;
-  selectedSlot?: DateRange | undefined;
-  handleSelectedEvent?: (event: CalendarEvent) => void;
   deleteClose?: () => void;
+  calendarEventRefetch: () => void;
+  handleSelectedEvent?: (event: CalendarEvent) => void;
 }
 
 /**
@@ -117,22 +118,24 @@ export default function SidebarEventForm({
   deleteClose,
   selectedSlot,
   handleSelectedEvent,
+  calendarEventRefetch,
 }: SidebarContentEventFormProps) {
+  // Get calendar utilities
+  const {
+    parseTime,
+    timeOptions,
+    checkIfAllDay,
+    DURATION_OPTIONS,
+    createDateWithTime,
+    calculateEndTimeFromDuration,
+  } = useCalendarUtils();
+
+  // #### Constants ####
   const EVENT_OPTIONS = options?.data?.eventOptions ?? [];
   const CLASS_OPTIONS = options?.data?.classOptions ?? [];
   const SUBJECT_OPTIONS = options?.data?.subjectOptions ?? [];
   const LOCATION_OPTIONS = options?.data?.locationOptions ?? [];
   const MEETING_LINK_OPTIONS = options?.data?.meetingLinkOptions ?? [];
-
-  // Get calendar utilities
-  const {
-    checkIfAllDay,
-    timeOptions,
-    DURATION_OPTIONS,
-    DURATION_MAP,
-    createDateWithTime,
-    parseTime,
-  } = useCalendarUtils();
 
   // #### State ####
   //  ---------------
@@ -140,55 +143,40 @@ export default function SidebarEventForm({
   const [subjectDialogOpen, setSubjectDialogOpen] = useState<boolean>(false);
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
 
-  //   #### Prepare Data ####
-  //  ---------------
-
-  // Formatted initial data to match the form schema
-  const formattedInitialData = useMemo(() => {
-    const defaultValues = sidebarFormDefaultValues({
-      from: selectedSlot?.from,
-      to: selectedSlot?.to,
-    });
-
-    if (mode === 'create') return defaultValues;
-
-    if (mode === 'edit' && !initialData) return undefined;
-
-    return {
-      ...defaultValues,
-      classType: initialData?.classType ?? 'theory',
-      title: initialData?.title ?? '',
-      description: initialData?.description ?? '',
-      startTime: format(new Date(initialData?.start ?? new Date()), 'HH:mm'),
-      endTime: format(new Date(initialData?.end ?? new Date()), 'HH:mm'),
-      start: new Date(initialData?.start ?? new Date()),
-      end: new Date(initialData?.end ?? new Date()),
-      allDay: checkIfAllDay({
-        start: new Date(initialData?.start ?? new Date()),
-        end: new Date(initialData?.end ?? new Date()),
-      }),
-      classId: initialData?.class?.id ?? 0,
-      subjectId: initialData?.subject?.id ?? 0,
-      creatorId: initialData?.creator?.id ?? 1,
-      eventId: initialData?.event?.id ?? 0,
-      locationId: initialData?.location?.id ?? undefined,
-      icalUid: initialData?.icalUid ?? '',
-      meetingType: initialData?.meetingType,
-      recurrence: initialData?.recurrence,
-      recurringId: initialData?.recurringId ?? '',
-      sequence: initialData?.sequence ?? 0,
-      color: initialData?.color,
-      meetingLinkId: initialData?.meetingLink?.id ?? undefined,
-      newMeetingLink: undefined,
-    } as SidebarEventFormSchemaType;
-  }, [mode, selectedSlot?.from, selectedSlot?.to, initialData, checkIfAllDay]);
-
   //   #### Form ####
   //  ---------------
   // Initialize form with default values or initial data
   const form = useForm<SidebarEventFormSchemaType>({
     resolver: zodResolver(SidebarEventFormSchema),
-    defaultValues: formattedInitialData as SidebarEventFormSchemaType,
+    defaultValues: {
+      title: initialData?.title ?? '',
+      description: initialData?.description ?? '',
+      start: initialData?.start ?? selectedSlot?.from ?? addHours(new Date(), 1),
+      end: initialData?.end ?? selectedSlot?.to ?? addHours(new Date(), 2),
+      allDay: checkIfAllDay({
+        start: new Date(initialData?.start ?? new Date()),
+        end: new Date(initialData?.end ?? new Date()),
+      }),
+      startTime: format(
+        initialData?.start ?? selectedSlot?.from ?? addHours(new Date(), 1),
+        'HH:mm'
+      ),
+      endTime: format(initialData?.end ?? selectedSlot?.to ?? addHours(new Date(), 2), 'HH:mm'),
+      classId: initialData?.class?.id ?? undefined,
+      subjectId: initialData?.subject?.id ?? undefined,
+      classType: initialData?.classType ?? 'theory',
+      creatorId: 1,
+      eventsId: initialData?.event?.id ?? 1,
+      icalUid: initialData?.icalUid ?? '',
+      meetingType: initialData?.meetingType ?? 'offline',
+      recurrence: initialData?.recurrence ?? undefined,
+      recurringId: initialData?.recurringId ?? undefined,
+      sequence: initialData?.sequence ?? 0,
+      color: initialData?.color ?? '#3b82f6',
+      meetingLinkId: initialData?.meetingLink?.id ?? undefined,
+      locationId: initialData?.location?.id ?? undefined,
+      newMeetingLink: undefined,
+    },
   });
 
   // Watch necessary form values
@@ -203,34 +191,6 @@ export default function SidebarEventForm({
   //  ---------------
   // Helper function to check if online meeting input should be visible
   const showOnlineMeetingInput = watchMeetingType === 'online' || watchMeetingType === 'hybrid';
-
-  // Helper function to calculate end time based on start time and duration
-  const calculateEndTimeFromDuration = useCallback(
-    (startDate: Date, startTime: string, durationValue: string) => {
-      // Create a base date with the start time
-      const baseDate = createDateWithTime(startDate, startTime);
-
-      // If it's a duration-based end time
-      if (durationValue.startsWith('duration_')) {
-        const durationMinutes = DURATION_MAP[durationValue as keyof typeof DURATION_MAP] ?? 0;
-        // Check if the value exists in the map
-        if (durationValue in DURATION_MAP === false) return baseDate;
-
-        const hours = Math.floor(durationMinutes / 60);
-        const minutes = durationMinutes % 60;
-
-        let newEndDate = baseDate;
-        if (hours > 0) newEndDate = addHours(newEndDate, hours);
-        if (minutes > 0) newEndDate = addMinutes(newEndDate, minutes);
-
-        return newEndDate;
-      }
-
-      // If it's a specific end time
-      return createDateWithTime(startDate, durationValue);
-    },
-    [createDateWithTime, DURATION_MAP]
-  );
 
   // Helper function to filter end time options. Show only times after start time for same day
   const endTimeOptions = useMemo(() => {
@@ -329,6 +289,8 @@ export default function SidebarEventForm({
         throw new Error(errorData.message || 'Failed to create event');
       }
 
+      queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
+
       const responseData = await response.json();
       return responseData as CalendarEventApiResponse;
     },
@@ -345,8 +307,6 @@ export default function SidebarEventForm({
     },
     onSettled: async response => {
       if (response) {
-        queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
-
         const event = response.data;
         form.reset();
         if (handleSelectedEvent) handleSelectedEvent(event);
@@ -371,6 +331,9 @@ export default function SidebarEventForm({
         throw new Error(errorData.message || 'Failed to update event');
       }
 
+      queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
+      calendarEventRefetch();
+
       const responseData = await response.json();
       return responseData as CalendarEventApiResponse;
     },
@@ -387,8 +350,6 @@ export default function SidebarEventForm({
     },
     onSettled: async response => {
       if (response) {
-        queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
-
         const event = response.data;
         form.reset();
         if (handleSelectedEvent) handleSelectedEvent(event);
@@ -398,10 +359,23 @@ export default function SidebarEventForm({
 
   // Delete Event Mutation
   const { mutate: deleteEvent, isPending: isDeletingEvent } = useMutation({
-    mutationFn: (eventId: string) =>
-      fetch(`/api/v1/calendar/${eventId}`, {
+    mutationFn: async (eventId: string) => {
+      const response = await fetch(`/api/v1/calendar/${eventId}`, {
         method: 'DELETE',
-      }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server response error:', errorData);
+        throw new Error(errorData.message || 'Failed to delete event');
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
+      calendarEventRefetch();
+
+      const responseData = await response.json();
+      return responseData as CalendarEventApiResponse;
+    },
     onSuccess: () => {
       toast.success('Event deleted successfully', {
         description: 'The event has been removed from calendar',
@@ -410,11 +384,11 @@ export default function SidebarEventForm({
     onError: error => {
       console.error(error);
       toast.error('Failed to delete event', {
-        description: 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
+      setIsConfirmDeleteDialogOpen(false);
       if (deleteClose) deleteClose();
     },
   });
@@ -444,8 +418,6 @@ export default function SidebarEventForm({
         ...commonData,
         id: initialData.id,
       };
-
-      console.log('Updating event with payload:', updatePayload);
       updateEvent(updatePayload);
     } else {
       toast.error('Cannot update event', {
@@ -533,7 +505,7 @@ export default function SidebarEventForm({
                   {/* Event */}
                   <FormField
                     control={form.control}
-                    name="eventId"
+                    name="eventsId"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Event</FormLabel>
@@ -547,7 +519,7 @@ export default function SidebarEventForm({
                                   '#3b82f6'
                               );
                             }}
-                            value={field.value?.toString()}
+                            defaultValue={field.value.toString()}
                           >
                             <FormControl>
                               <SelectTrigger className="hover:bg-accent w-full cursor-pointer transition-all">
@@ -1081,7 +1053,13 @@ export default function SidebarEventForm({
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={confirmDeleteAction} disabled={isDeletingEvent}>
+                    <AlertDialogAction
+                      onClick={e => {
+                        e.preventDefault();
+                        confirmDeleteAction();
+                      }}
+                      disabled={isDeletingEvent}
+                    >
                       {isDeletingEvent && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Delete
                     </AlertDialogAction>

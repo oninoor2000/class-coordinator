@@ -1,6 +1,6 @@
 import type { SidebarEventFormSchemaType } from '@/lib/schema/calendar-schema';
 import type { CalendarEvent } from '@/lib/types/calendar-types';
-import { addHours, getHours, isSameDay, format } from 'date-fns';
+import { addHours, getHours, isSameDay, format, addMinutes } from 'date-fns';
 import { useCallback, useMemo } from 'react';
 
 /**
@@ -61,7 +61,7 @@ export const sidebarFormDefaultValues = (selectedSlot?: {
     subjectId: 0,
     classType: 'theory' as const,
     creatorId: 1,
-    eventId: 0,
+    eventsId: 0,
     icalUid: undefined,
     meetingType: 'offline',
     recurrence: undefined,
@@ -109,7 +109,7 @@ export const useCalendarUtils = () => {
   const checkIfAllDay = useCallback(
     ({ start, end }: { start: Date | undefined; end: Date | undefined }): boolean => {
       if (!start || !end) return false;
-      return isSameDay(start, end) && getHours(start) === 0 && getHours(end) === 0;
+      return isSameDay(start, end) && getHours(start) === 0 && getHours(end) === 23;
     },
     []
   );
@@ -166,7 +166,7 @@ export const useCalendarUtils = () => {
   );
 
   /**
-   * @description Duration map for duration options
+   * @description Duration map for @constant DURATION_MAP
    * @returns {Object} The duration map
    * @example
    * const { DURATION_MAP } = useCalendarUtils();
@@ -227,6 +227,46 @@ export const useCalendarUtils = () => {
     [parseTime]
   );
 
+  // Helper function to calculate end time based on start time and duration
+  /**
+   * @description Calculate end time from start time and duration
+   * @param {Date} startDate - The start date
+   * @param {string} startTime - The start time
+   * @param {string} durationValue - The duration value
+   * @returns {Date} The end date
+   * @example
+   * const { calculateEndTimeFromDuration } = useCalendarUtils();
+   * console.log(calculateEndTimeFromDuration(new Date(), '12:30', 'duration_1h'));
+   * // 2021-01-01T13:30:00.000Z
+   * /
+   */
+  const calculateEndTimeFromDuration = useCallback(
+    (startDate: Date, startTime: string, durationValue: string) => {
+      // Create a base date with the start time
+      const baseDate = createDateWithTime(startDate, startTime);
+
+      // If it's a duration-based end time
+      if (durationValue.startsWith('duration_')) {
+        const durationMinutes = DURATION_MAP[durationValue as keyof typeof DURATION_MAP] ?? 0;
+        // Check if the value exists in the map
+        if (durationValue in DURATION_MAP === false) return baseDate;
+
+        const hours = Math.floor(durationMinutes / 60);
+        const minutes = durationMinutes % 60;
+
+        let newEndDate = baseDate;
+        if (hours > 0) newEndDate = addHours(newEndDate, hours);
+        if (minutes > 0) newEndDate = addMinutes(newEndDate, minutes);
+
+        return newEndDate;
+      }
+
+      // If it's a specific end time
+      return createDateWithTime(startDate, durationValue);
+    },
+    [createDateWithTime, DURATION_MAP]
+  );
+
   return {
     checkIfAllDay,
     timeOptions,
@@ -234,5 +274,6 @@ export const useCalendarUtils = () => {
     DURATION_MAP,
     parseTime,
     createDateWithTime,
+    calculateEndTimeFromDuration,
   };
 };
