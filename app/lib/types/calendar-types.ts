@@ -111,7 +111,20 @@ export type RecurrenceRule = {
   count?: number | null;
 };
 
+/**
+ * Calendar Link API Response
+ * @description This is the type for the response from the calendar create link API {POST /api/v1/meeting-link}
+ */
 export type CalendarLinkApiResponse = {
   data: typeof links.$inferSelect;
+  _links: Record<string, { href: string; method?: string }>;
+};
+
+/**
+ * Calendar Event API Response
+ * @description This is the type for the response from the calendar event API {PATCH /api/v1/calendar/$id}
+ */
+export type CalendarEventApiResponse = {
+  data: CalendarEvent;
   _links: Record<string, { href: string; method?: string }>;
 };

@@ -72,15 +72,15 @@ export const SidebarEventFormSchema = z
         message: 'Invalid end time format. Use HH:mm (e.g., 17:30)',
       }),
     allDay: z.boolean(),
-    creatorId: z.number().optional(),
-    eventId: z.number().optional(),
+    creatorId: z.number(),
+    eventId: z.number(),
     classType: z.enum(ClassTypeEnum.enumValues),
     meetingType: z.enum(MeetingTypeEnum.enumValues),
     recurrence: z.string().nullable().optional(),
     recurringId: z.string().optional(),
     sequence: z.number().optional(),
     icalUid: z.string().optional(),
-    color: z.string().optional(),
+    color: z.string(),
     locationId: z.string().optional(),
 
     // Need to remove the optional for classId and subjectId

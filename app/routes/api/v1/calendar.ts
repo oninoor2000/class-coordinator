@@ -71,8 +71,13 @@ const CreateEventSchema = z.object({
   meetingType: z.enum(MeetingTypeEnum.enumValues),
   locationId: z.string().optional(),
   recurrence: z.string().optional(),
+  recurringId: z.string().optional(),
+  sequence: z.number().optional(),
+  icalUid: z.string().optional(),
   color: z.string().optional(),
   meetingLinkId: z.number().int().positive().optional(),
+  creatorId: z.number().int().positive().optional(),
+  eventsId: z.number().int().positive().optional(),
 });
 export type CreateEventSchemaType = z.infer<typeof CreateEventSchema>;
 
@@ -330,7 +335,7 @@ export const APIRoute = createAPIFileRoute('/api copy/v1/calendar')({
       const id = uuidv4();
 
       // Prepare data for insertion
-      const newEvent = {
+      const newEvent: typeof schedules.$inferInsert = {
         id,
         title: eventData.title,
         description: eventData.description,
@@ -345,6 +350,9 @@ export const APIRoute = createAPIFileRoute('/api copy/v1/calendar')({
         color: eventData.color,
         creatorId: 0, // Will be replaced with user ID after authentication is implemented
         eventsId: 1, // Should be adjusted to match your events logic
+        recurringId: eventData.recurringId,
+        sequence: eventData.sequence,
+        icalUid: eventData.icalUid,
         createdAt: new Date(),
       };
 

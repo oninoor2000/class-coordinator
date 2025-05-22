@@ -8,7 +8,7 @@ import {
   getRecurrenceDescription,
   recurrenceRuleToString,
   stringToRecurrenceRule,
-} from '@/utils/recurrence-utils';
+} from '@/utils/calendar/recurrence-utils';
 import {
   Select,
   SelectContent,

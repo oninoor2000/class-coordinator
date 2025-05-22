@@ -15,7 +15,7 @@ import { format, getDay, isSameDay, parse, startOfWeek } from 'date-fns';
 
 import { cn } from '@/lib/utils';
 import { SidebarButton } from './sidebar/sidebar-toggle';
-import { eventStyleGetter } from '@/utils/calendar-utils';
+import { eventStyleGetter } from '@/utils/calendar/calendar-utils';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 
 import CalendarHeader from './calendar-header';
@@ -214,7 +214,6 @@ export default function FullCalendar() {
 
   // On select event
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
-    console.log('Selected event: ', event);
     setSelectedEvent(event);
     setSidebarOpen(true);
     setSidebarContent('showEvent');
@@ -222,13 +221,8 @@ export default function FullCalendar() {
 
   // #### Sidebar Handlers ####
   // On close sidebar
-  const handleCloseSidebar = () => {
-    setSidebarContent('events');
-  };
-
-  // On close edit form sidebar
-  const handleCloseEditFormSidebar = () => {
-    setSidebarContent('showEvent');
+  const handleCloseSidebar = (event: 'events' | 'addForm' | 'editForm' | 'showEvent') => {
+    setSidebarContent(event);
   };
 
   // On edit event
@@ -299,10 +293,11 @@ export default function FullCalendar() {
             >
               <SidebarEventForm
                 mode="create"
-                onClose={handleCloseSidebar}
+                onClose={() => handleCloseSidebar('showEvent')}
                 options={dataOptions}
                 initialData={selectedEvent ?? undefined}
                 selectedSlot={selectedSlot}
+                handleSelectedEvent={handleSelectEvent}
               />
             </motion.div>
           )}
@@ -317,7 +312,8 @@ export default function FullCalendar() {
             >
               <SidebarEventForm
                 mode="edit"
-                onClose={handleCloseEditFormSidebar}
+                onClose={() => handleCloseSidebar('showEvent')}
+                deleteClose={() => handleCloseSidebar('events')}
                 options={dataOptions}
                 handleSelectedEvent={handleSelectEvent}
                 initialData={selectedEvent ?? undefined}
@@ -328,7 +324,7 @@ export default function FullCalendar() {
             <motion.div key="showEvent" className="h-full">
               <SidebarEventDetail
                 event={selectedEvent ?? undefined}
-                onClose={handleCloseSidebar}
+                onClose={() => handleCloseSidebar('events')}
                 onEdit={handleEditEvent}
               />
             </motion.div>

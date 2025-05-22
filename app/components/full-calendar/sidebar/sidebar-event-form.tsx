@@ -4,13 +4,18 @@ import { id } from 'date-fns/locale';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { addHours, addMinutes, format, getHours, isSameDay } from 'date-fns';
+import { addHours, addMinutes, format, isSameDay } from 'date-fns';
 
 import type { LucideIcon } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 import type { CreateEventSchemaType } from '@/routes/api/v1/calendar';
+import type { UpdateEventSchemaType } from '@/routes/api/v1/calendar.$id';
 import type { SidebarEventFormSchemaType } from '@/lib/schema/calendar-schema';
-import type { CalendarEvent, FormOptionsApiResponse } from '@/lib/types/calendar-types';
+import type {
+  CalendarEvent,
+  FormOptionsApiResponse,
+  CalendarEventApiResponse,
+} from '@/lib/types/calendar-types';
 
 import {
   X,
@@ -51,6 +56,17 @@ import {
   CommandEmpty,
   CommandGroup,
 } from '@/components/ui/command';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -60,11 +76,13 @@ import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { stringToRecurrenceRule } from '@/utils/recurrence-utils';
 import { SidebarEventFormSchema } from '@/lib/schema/calendar-schema';
+import { stringToRecurrenceRule } from '@/utils/calendar/recurrence-utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CLASS_TYPE_OPTIONS, MEETING_TYPE_OPTIONS } from '@/utils/calendar/constant';
+import { sidebarFormDefaultValues, useCalendarUtils } from '@/utils/calendar/calendar-utils';
 
 import OnlineMeetingInput from './online-meeting-input';
 import SbFormRecurrenceInput from './sb-form-recurrence-input';
@@ -76,6 +94,7 @@ interface SidebarContentEventFormProps {
   onClose?: () => void;
   selectedSlot?: DateRange | undefined;
   handleSelectedEvent?: (event: CalendarEvent) => void;
+  deleteClose?: () => void;
 }
 
 /**
@@ -95,130 +114,41 @@ export default function SidebarEventForm({
   initialData,
   options,
   onClose,
+  deleteClose,
   selectedSlot,
   handleSelectedEvent,
 }: SidebarContentEventFormProps) {
-  // #### Options set for the form ####
-  const CLASS_TYPE_OPTIONS = [
-    {
-      value: 'theory',
-      label: 'Theory',
-    },
-    {
-      value: 'practicum',
-      label: 'Practicum',
-    },
-    {
-      value: 'midterm-exams',
-      label: 'Midterm Exams',
-    },
-    {
-      value: 'end-of-semester-exams',
-      label: 'End of Semester Exams',
-    },
-  ] as const;
-  const MEETING_TYPE_OPTIONS = [
-    {
-      value: 'offline',
-      label: 'Offline',
-    },
-    {
-      value: 'online',
-      label: 'Online',
-    },
-    {
-      value: 'hybrid',
-      label: 'Hybrid',
-    },
-  ] as const;
-  const TIME_INTERVAL = 30;
   const EVENT_OPTIONS = options?.data?.eventOptions ?? [];
   const CLASS_OPTIONS = options?.data?.classOptions ?? [];
   const SUBJECT_OPTIONS = options?.data?.subjectOptions ?? [];
   const LOCATION_OPTIONS = options?.data?.locationOptions ?? [];
   const MEETING_LINK_OPTIONS = options?.data?.meetingLinkOptions ?? [];
 
+  // Get calendar utilities
+  const {
+    checkIfAllDay,
+    timeOptions,
+    DURATION_OPTIONS,
+    DURATION_MAP,
+    createDateWithTime,
+    parseTime,
+  } = useCalendarUtils();
+
   // #### State ####
   //  ---------------
   const [classDialogOpen, setClassDialogOpen] = useState<boolean>(false);
   const [subjectDialogOpen, setSubjectDialogOpen] = useState<boolean>(false);
+  const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
 
   //   #### Prepare Data ####
   //  ---------------
 
-  //   Check if the event is all day
-  const checkIfAllDay = useCallback(
-    ({ start, end }: { start: Date | undefined; end: Date | undefined }): boolean => {
-      if (!start || !end) return false;
-      return isSameDay(start, end) && getHours(start) === 0 && getHours(end) === 0;
-    },
-    []
-  );
-
-  // Generate time options
-  const timeOptions = useMemo(() => {
-    const options: { value: string; label: string }[] = [];
-    for (let h = 0; h < 24; h++) {
-      for (let m = 0; m < 60; m += TIME_INTERVAL) {
-        const hours = String(h).padStart(2, '0');
-        const minutes = String(m).padStart(2, '0');
-        const time = `${hours}:${minutes}`;
-        options.push({ value: time, label: time });
-      }
-    }
-    return options;
-  }, []);
-
-  // Duration options.
-  const DURATION_OPTIONS = useMemo(
-    () => [
-      { value: 'duration_30m', label: '30 minutes' },
-      { value: 'duration_1h', label: '1 hour' },
-      { value: 'duration_1h30m', label: '1 hour 30 minutes' },
-      { value: 'duration_2h', label: '2 hours' },
-      { value: 'duration_3h', label: '3 hours' },
-    ],
-    []
-  );
-
-  // Duration map
-  const DURATION_MAP = useMemo(
-    () => ({
-      duration_30m: 30,
-      duration_1h: 60,
-      duration_1h30m: 90,
-      duration_2h: 120,
-      duration_3h: 180,
-    }),
-    []
-  );
-  type DurationKey = keyof typeof DURATION_MAP;
-
   // Formatted initial data to match the form schema
   const formattedInitialData = useMemo(() => {
-    const defaultValues: SidebarEventFormSchemaType = {
-      title: '',
-      description: '',
-      start: selectedSlot?.from ?? addHours(new Date(), 1),
-      end: selectedSlot?.to ?? addHours(new Date(), 2),
-      allDay: false,
-      startTime: format(selectedSlot?.from ?? addHours(new Date(), 1), 'HH:mm'),
-      endTime: format(selectedSlot?.to ?? addHours(new Date(), 2), 'HH:mm'),
-      classId: 0,
-      subjectId: 0,
-      classType: 'theory' as const,
-      creatorId: 0,
-      eventId: undefined,
-      icalUid: undefined,
-      meetingType: 'offline',
-      recurrence: undefined,
-      recurringId: undefined,
-      sequence: 0,
-      color: undefined,
-      meetingLinkId: undefined,
-      locationId: undefined,
-      newMeetingLink: undefined,
-    };
+    const defaultValues = sidebarFormDefaultValues({
+      from: selectedSlot?.from,
+      to: selectedSlot?.to,
+    });
 
     if (mode === 'create') return defaultValues;
 
@@ -229,8 +159,8 @@ export default function SidebarEventForm({
       classType: initialData?.classType ?? 'theory',
       title: initialData?.title ?? '',
       description: initialData?.description ?? '',
-      startTime: format(new Date(initialData?.start ?? new Date()), 'HH:00'),
-      endTime: format(new Date(initialData?.end ?? new Date()), 'HH:00'),
+      startTime: format(new Date(initialData?.start ?? new Date()), 'HH:mm'),
+      endTime: format(new Date(initialData?.end ?? new Date()), 'HH:mm'),
       start: new Date(initialData?.start ?? new Date()),
       end: new Date(initialData?.end ?? new Date()),
       allDay: checkIfAllDay({
@@ -239,14 +169,14 @@ export default function SidebarEventForm({
       }),
       classId: initialData?.class?.id ?? 0,
       subjectId: initialData?.subject?.id ?? 0,
-      creatorId: initialData?.creator?.id ?? 0,
+      creatorId: initialData?.creator?.id ?? 1,
       eventId: initialData?.event?.id ?? 0,
       locationId: initialData?.location?.id ?? undefined,
-      icalUid: initialData?.icalUid,
+      icalUid: initialData?.icalUid ?? '',
       meetingType: initialData?.meetingType,
       recurrence: initialData?.recurrence,
-      recurringId: initialData?.recurringId,
-      sequence: initialData?.sequence,
+      recurringId: initialData?.recurringId ?? '',
+      sequence: initialData?.sequence ?? 0,
       color: initialData?.color,
       meetingLinkId: initialData?.meetingLink?.id ?? undefined,
       newMeetingLink: undefined,
@@ -274,25 +204,6 @@ export default function SidebarEventForm({
   // Helper function to check if online meeting input should be visible
   const showOnlineMeetingInput = watchMeetingType === 'online' || watchMeetingType === 'hybrid';
 
-  // Helper function to parse time string into hours and minutes
-  const parseTime = useCallback((timeString: string) => {
-    if (!timeString || typeof timeString !== 'string') return [0, 0];
-    const [hours, minutes] = timeString.split(':').map(Number);
-    return [hours ?? 0, minutes ?? 0];
-  }, []);
-
-  // Helper function to create date with specific time
-  const createDateWithTime = useCallback(
-    (date: Date, timeString: string) => {
-      if (!date) return new Date();
-      const newDate = new Date(date);
-      const [hours, minutes] = parseTime(timeString);
-      newDate.setHours(hours ?? 0, minutes, 0, 0);
-      return newDate;
-    },
-    [parseTime]
-  );
-
   // Helper function to calculate end time based on start time and duration
   const calculateEndTimeFromDuration = useCallback(
     (startDate: Date, startTime: string, durationValue: string) => {
@@ -301,8 +212,9 @@ export default function SidebarEventForm({
 
       // If it's a duration-based end time
       if (durationValue.startsWith('duration_')) {
-        const durationMinutes = DURATION_MAP[durationValue as DurationKey] ?? 0;
-        if (durationMinutes === 0) return baseDate;
+        const durationMinutes = DURATION_MAP[durationValue as keyof typeof DURATION_MAP] ?? 0;
+        // Check if the value exists in the map
+        if (durationValue in DURATION_MAP === false) return baseDate;
 
         const hours = Math.floor(durationMinutes / 60);
         const minutes = durationMinutes % 60;
@@ -333,7 +245,7 @@ export default function SidebarEventForm({
       const startTotalMinutes = (startHours ?? 0) * 60 + (startMinutes ?? 0);
 
       // Add specific time options that are after the start time
-      timeOptions.forEach(option => {
+      timeOptions.forEach((option: { value: string; label: string }) => {
         const [hours, minutes] = parseTime(option.value);
         const optionTotalMinutes = (hours ?? 0) * 60 + (minutes ?? 0);
 
@@ -405,40 +317,141 @@ export default function SidebarEventForm({
   const queryClient = useQueryClient();
   // Event Mutation
   const { mutate: createEvent, isPending: isCreatingEvent } = useMutation({
-    mutationFn: (event: CreateEventSchemaType) =>
-      fetch('/api/v1/calendar', {
+    mutationFn: async (event: CreateEventSchemaType) => {
+      const response = await fetch('/api/v1/calendar', {
         method: 'POST',
         body: JSON.stringify(event),
-      }),
-    onSuccess: async data => {
-      const response = await data.json();
-      const event = response.data as CalendarEvent;
-      if (handleSelectedEvent) handleSelectedEvent(event);
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server response error:', errorData);
+        throw new Error(errorData.message || 'Failed to create event');
+      }
+
+      const responseData = await response.json();
+      return responseData as CalendarEventApiResponse;
+    },
+    onSuccess: () => {
       toast.success('Event created successfully', {
         description: 'The event has been created successfully',
       });
     },
     onError: error => {
+      console.error('Update error:', error);
+      toast.error('Failed to update event', {
+        description: error instanceof Error ? error.message : 'Please try again',
+      });
+    },
+    onSettled: async response => {
+      if (response) {
+        queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
+
+        const event = response.data;
+        form.reset();
+        if (handleSelectedEvent) handleSelectedEvent(event);
+        if (onClose) onClose();
+      }
+    },
+  });
+
+  const { mutate: updateEvent, isPending: isUpdatingEvent } = useMutation({
+    mutationFn: async (event: UpdateEventSchemaType) => {
+      const response = await fetch(`/api/v1/calendar/${event.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(event),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server response error:', errorData);
+        throw new Error(errorData.message || 'Failed to update event');
+      }
+
+      const responseData = await response.json();
+      return responseData as CalendarEventApiResponse;
+    },
+    onSuccess: () => {
+      toast.success('Event updated successfully', {
+        description: 'The event has been updated successfully',
+      });
+    },
+    onError: error => {
+      console.error('Update error:', error);
+      toast.error('Failed to update event', {
+        description: error instanceof Error ? error.message : 'Please try again',
+      });
+    },
+    onSettled: async response => {
+      if (response) {
+        queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
+
+        const event = response.data;
+        form.reset();
+        if (handleSelectedEvent) handleSelectedEvent(event);
+      }
+    },
+  });
+
+  // Delete Event Mutation
+  const { mutate: deleteEvent, isPending: isDeletingEvent } = useMutation({
+    mutationFn: (eventId: string) =>
+      fetch(`/api/v1/calendar/${eventId}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: () => {
+      toast.success('Event deleted successfully', {
+        description: 'The event has been removed from calendar',
+      });
+    },
+    onError: error => {
       console.error(error);
-      toast.error('Failed to create event', {
+      toast.error('Failed to delete event', {
         description: 'Please try again',
       });
     },
     onSettled: () => {
-      form.reset();
       queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
+      if (deleteClose) deleteClose();
     },
   });
+
+  // Handle event deletion
+  const confirmDeleteAction = () => {
+    if (initialData?.id) {
+      deleteEvent(initialData.id);
+    }
+  };
 
   // Handle form submission
   function handleSubmit(data: SidebarEventFormSchemaType): void {
     const { recurrence, ...rest } = data;
-    createEvent({
+
+    const commonData = {
       ...rest,
       start: data.start.toISOString(),
       end: data.end.toISOString(),
       recurrence: recurrence ?? undefined,
-    });
+    };
+
+    if (mode === 'create') {
+      createEvent(commonData);
+    } else if (mode === 'edit' && initialData?.id) {
+      const updatePayload = {
+        ...commonData,
+        id: initialData.id,
+      };
+
+      console.log('Updating event with payload:', updatePayload);
+      updateEvent(updatePayload);
+    } else {
+      toast.error('Cannot update event', {
+        description: 'Event ID is missing',
+      });
+    }
   }
 
   return (
@@ -511,6 +524,11 @@ export default function SidebarEventForm({
                       <p className="text-muted-foreground text-xs">john.doe@example.com</p>
                     </div>
                   </div>
+                  <FormField
+                    control={form.control}
+                    name="creatorId"
+                    render={({ field }) => <Input type="hidden" {...field} />}
+                  />
 
                   {/* Event */}
                   <FormField
@@ -1015,28 +1033,71 @@ export default function SidebarEventForm({
                     />
                   </>
                 )}
+
+                {/* Hidden input for iCalUID, recurringId, sequence */}
+                <FormField
+                  control={form.control}
+                  name="icalUid"
+                  render={({ field }) => <Input type="hidden" {...field} />}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="recurringId"
+                  render={({ field }) => <Input type="hidden" {...field} />}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="sequence"
+                  render={({ field }) => <Input type="hidden" {...field} />}
+                />
               </div>
             </ScrollArea>
           </CardContent>
           <CardFooter className="flex justify-between rounded-b-md bg-neutral-50 p-2 py-3 dark:bg-neutral-900">
             {mode == 'edit' && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="mr-2 cursor-pointer border-red-500 text-xs text-red-500 hover:bg-red-500/10 hover:text-red-500 dark:border-red-500/80 dark:text-red-500/80 dark:hover:bg-red-500/10 dark:hover:text-red-500/80"
+              <AlertDialog
+                open={isConfirmDeleteDialogOpen}
+                onOpenChange={setIsConfirmDeleteDialogOpen}
               >
-                <Trash className="h-3 w-3" />
-                Delete this event
-              </Button>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mr-2 cursor-pointer border-red-500 text-xs text-red-500 hover:bg-red-500/10 hover:text-red-500 dark:border-red-500/80 dark:text-red-500/80 dark:hover:bg-red-500/10 dark:hover:text-red-500/80"
+                    disabled={isDeletingEvent}
+                  >
+                    <Trash className="h-3 w-3" />
+                    Delete this event
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the event.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmDeleteAction} disabled={isDeletingEvent}>
+                      {isDeletingEvent && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
+
             <Button
               size="sm"
               type="submit"
               variant="default"
               className="dark:text-background ml-auto cursor-pointer bg-emerald-600 text-xs hover:bg-emerald-500"
-              disabled={isCreatingEvent}
+              disabled={isCreatingEvent || isUpdatingEvent}
             >
-              {isCreatingEvent && <Loader2 className="h-3 w-3 animate-spin" />}
+              {(isCreatingEvent || isUpdatingEvent) && <Loader2 className="h-3 w-3 animate-spin" />}
               {mode === 'create' ? 'Create' : 'Save'}
             </Button>
           </CardFooter>

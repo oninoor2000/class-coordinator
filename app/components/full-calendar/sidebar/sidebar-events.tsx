@@ -7,7 +7,7 @@ import type { CalendarEvent } from '@/lib/types/calendar-types';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '../../ui/skeleton';
 import { ScrollArea } from '../../ui/scroll-area';
-import { formatTime, getDuration } from '@/utils/calendar-utils';
+import { formatTime, getDuration } from '@/utils/calendar/calendar-utils';
 
 import SidebarForm from './sidebar-form';
 
